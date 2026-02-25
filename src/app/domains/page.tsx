@@ -15,28 +15,12 @@ export default function DomainsDashboard() {
             </div>
 
             <div className={styles.domainList}>
-                <div className="glass-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div className={styles.domainInfo}>
-                        <h3 className={styles.domainName}>example.com</h3>
-                        <span className={styles.statusActive}>Active</span>
-                    </div>
-                    <div className={styles.domainActions}>
-                        <Link href="/domains/example.com" className="btn btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.75rem' }}>
-                            Manage
-                        </Link>
-                    </div>
-                </div>
-
-                <div className="glass-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div className={styles.domainInfo}>
-                        <h3 className={styles.domainName}>my-awesome-startup.tech</h3>
-                        <span className={styles.statusExpiring}>Expiring Soon</span>
-                    </div>
-                    <div className={styles.domainActions}>
-                        <Link href="/domains/my-awesome-startup.tech" className="btn btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.75rem' }}>
-                            Manage
-                        </Link>
-                    </div>
+                <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+                    <h3 style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>You don't have any domains yet</h3>
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Start your journey by searching for a new domain name.</p>
+                    <Link href="/domains/search" className="btn btn-primary">
+                        Search Domains
+                    </Link>
                 </div>
             </div>
         </div>
