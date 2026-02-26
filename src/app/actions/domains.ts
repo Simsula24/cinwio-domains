@@ -67,7 +67,13 @@ export async function searchDomain(keyword: string): Promise<{ results?: DomainS
         }
 
         const data = await response.json();
-        const results = data.results as DomainSearchResult[];
+
+        // Name.com omits the 'purchasable' property entirely when a domain is taken/unavailable!
+        // We MUST map the results to explicitly inject `purchasable: false` when it's missing.
+        const results = (data.results as any[] || []).map(result => ({
+            ...result,
+            purchasable: !!result.purchasable // strictly casts undefined to false
+        })) as DomainSearchResult[];
 
         if (!results || results.length === 0) {
             return { error: 'No domains found for this keyword.' };

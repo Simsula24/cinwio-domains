@@ -135,3 +135,21 @@ export async function deleteDnsRecord(domainName: string, recordId: string): Pro
 
     return { success: true };
 }
+
+type UpdateRecordResponse = { error?: string; success?: boolean; record?: any };
+
+export async function updateDnsRecord(domainName: string, recordId: string, data: { type: string, name: string, content: string, proxied: boolean, ttl: number }): Promise<UpdateRecordResponse> {
+    const zoneRes = await getOrCreateZone(domainName);
+    if (zoneRes.error) return { error: zoneRes.error };
+
+    const updateData = await fetchCf(`/zones/${zoneRes.zoneId}/dns_records/${recordId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    });
+
+    if (!updateData.success) {
+        return { error: 'Failed to update DNS record. ' + (updateData.errors[0]?.message || '') };
+    }
+
+    return { success: true, record: updateData.result };
+}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import styles from './page.module.css';
-import { getDnsRecords, createDnsRecord, deleteDnsRecord } from '../actions/cloudflare';
+import { getDnsRecords, createDnsRecord, deleteDnsRecord, updateDnsRecord } from '../actions/cloudflare';
 
 export default function DnsManager({ domains }: { domains: any[] }) {
     const [selectedDomain, setSelectedDomain] = useState(domains.length > 0 ? domains[0]?.domainName : '');
@@ -17,6 +17,13 @@ export default function DnsManager({ domains }: { domains: any[] }) {
     const [newContent, setNewContent] = useState('');
     const [newProxied, setNewProxied] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Edit states
+    const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
+    const [editType, setEditType] = useState('A');
+    const [editName, setEditName] = useState('');
+    const [editContent, setEditContent] = useState('');
+    const [editProxied, setEditProxied] = useState(true);
 
     useEffect(() => {
         if (!selectedDomain) return;
@@ -72,6 +79,37 @@ export default function DnsManager({ domains }: { domains: any[] }) {
         } else {
             alert(res.error);
         }
+    };
+
+    const handleEditRecord = (record: any) => {
+        setEditingRecordId(record.id);
+        setEditType(record.type);
+        setEditName(record.name);
+        setEditContent(record.content);
+        setEditProxied(record.proxied);
+    };
+
+    const handleUpdateRecord = async (recordId: string) => {
+        if (!editName || !editContent) return;
+
+        setIsSubmitting(true);
+        const name = editName === '@' ? selectedDomain : (editName.includes(selectedDomain) ? editName : `${editName}.${selectedDomain}`);
+
+        const res = await updateDnsRecord(selectedDomain, recordId, {
+            type: editType,
+            name: name,
+            content: editContent,
+            proxied: ['A', 'AAAA', 'CNAME'].includes(editType) ? editProxied : false,
+            ttl: 1
+        });
+
+        if (res.success) {
+            setRecords(records.map(r => r.id === recordId ? res.record : r));
+            setEditingRecordId(null);
+        } else {
+            alert(res.error);
+        }
+        setIsSubmitting(false);
     };
 
     return (
@@ -174,24 +212,60 @@ export default function DnsManager({ domains }: { domains: any[] }) {
                             ) : records.length > 0 ? (
                                 records.map(record => (
                                     <tr key={record.id}>
-                                        <td><span className={styles.recordType}>{record.type}</span></td>
-                                        <td style={{ fontWeight: 500 }}>{record.name}</td>
-                                        <td style={{ color: 'var(--text-secondary)', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={record.content}>
-                                            {record.content}
-                                        </td>
-                                        <td>{record.ttl === 1 ? 'Auto' : record.ttl}</td>
-                                        <td>
-                                            {record.proxied ? (
-                                                <span className={styles.proxyActive}>Proxied</span>
-                                            ) : (
-                                                <span className={styles.proxyOff}>DNS Only</span>
-                                            )}
-                                        </td>
-                                        <td>
-                                            <div style={{ display: 'flex', gap: '1rem' }}>
-                                                <button className={styles.actionBtnDel} onClick={() => handleDelete(record.id)}>Delete</button>
-                                            </div>
-                                        </td>
+                                        {editingRecordId === record.id ? (
+                                            <>
+                                                <td>
+                                                    <select className="form-input" value={editType} onChange={e => setEditType(e.target.value)} style={{ margin: 0, minWidth: '80px', padding: '0.4rem' }}>
+                                                        <option value="A">A</option>
+                                                        <option value="AAAA">AAAA</option>
+                                                        <option value="CNAME">CNAME</option>
+                                                        <option value="TXT">TXT</option>
+                                                        <option value="MX">MX</option>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <input type="text" className="form-input" value={editName} onChange={e => setEditName(e.target.value)} style={{ margin: 0, padding: '0.4rem' }} />
+                                                </td>
+                                                <td>
+                                                    <input type="text" className="form-input" value={editContent} onChange={e => setEditContent(e.target.value)} style={{ margin: 0, padding: '0.4rem' }} />
+                                                </td>
+                                                <td>Auto</td>
+                                                <td>
+                                                    <select className="form-input" value={editProxied ? 'true' : 'false'} onChange={e => setEditProxied(e.target.value === 'true')} style={{ margin: 0, padding: '0.4rem' }} disabled={!['A', 'AAAA', 'CNAME'].includes(editType)}>
+                                                        <option value="true">Proxied</option>
+                                                        <option value="false">DNS Only</option>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                        <button className={styles.actionBtn} onClick={() => handleUpdateRecord(record.id)} disabled={isSubmitting}>Save</button>
+                                                        <button className={styles.actionBtnDel} style={{ color: 'var(--text-secondary)' }} onClick={() => setEditingRecordId(null)}>Cancel</button>
+                                                    </div>
+                                                </td>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <td><span className={styles.recordType}>{record.type}</span></td>
+                                                <td style={{ fontWeight: 500 }}>{record.name}</td>
+                                                <td style={{ color: 'var(--text-secondary)', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={record.content}>
+                                                    {record.content}
+                                                </td>
+                                                <td>{record.ttl === 1 ? 'Auto' : record.ttl}</td>
+                                                <td>
+                                                    {record.proxied ? (
+                                                        <span className={styles.proxyActive}>Proxied</span>
+                                                    ) : (
+                                                        <span className={styles.proxyOff}>DNS Only</span>
+                                                    )}
+                                                </td>
+                                                <td>
+                                                    <div style={{ display: 'flex', gap: '1rem' }}>
+                                                        <button className={styles.actionBtn} onClick={() => handleEditRecord(record)}>Edit</button>
+                                                        <button className={styles.actionBtnDel} onClick={() => handleDelete(record.id)}>Delete</button>
+                                                    </div>
+                                                </td>
+                                            </>
+                                        )}
                                     </tr>
                                 ))
                             ) : (
