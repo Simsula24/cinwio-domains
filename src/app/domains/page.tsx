@@ -36,8 +36,8 @@ export default async function DomainsDashboard() {
                                 )}
                             </div>
                             <div className={styles.domainActions}>
-                                <button className="btn btn-outline" style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}>Manage DNS</button>
-                                <button className="btn btn-outline" style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}>Settings</button>
+                                <Link href="/dns" className="btn btn-outline" style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}>Manage DNS</Link>
+                                <Link href={`/domains/${domain.domainName}/settings`} className="btn btn-outline" style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}>Settings</Link>
                             </div>
                         </div>
                     ))

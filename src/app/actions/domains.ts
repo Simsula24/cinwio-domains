@@ -115,3 +115,80 @@ export async function getUserDomains() {
         return { domains: [], error: 'Failed to fetch your domains.' };
     }
 }
+
+export async function getDomainDetails(domainName: string) {
+    const cookieStore = await cookies();
+    const pbAuth = cookieStore.get('pb_auth')?.value;
+
+    if (!pbAuth) {
+        return { error: 'Not authenticated' };
+    }
+
+    const pb = new PocketBase(pbUrl);
+    pb.authStore.save(pbAuth, null);
+
+    if (!pb.authStore.isValid) {
+        return { error: 'Not authenticated' };
+    }
+
+    try {
+        await pb.collection('users').authRefresh();
+
+        const domains = await pb.collection('domains').getFullList({
+            filter: `user = "${pb.authStore.model?.id}" && domainName = "${domainName}"`,
+        });
+
+        if (domains.length === 0) {
+            return { error: 'Domain not found or unauthorized' };
+        }
+
+        const dbDomain = domains[0];
+
+        let nameComData = null;
+
+        // Try to fetch from name.com API
+        if (NAMECOM_API_USERNAME && NAMECOM_API_TOKEN) {
+            const authString = Buffer.from(`${NAMECOM_API_USERNAME}:${NAMECOM_API_TOKEN}`).toString('base64');
+            const response = await fetch(`${NAMECOM_API_URL}/v4/domains/${domainName}`, {
+                headers: {
+                    'Authorization': `Basic ${authString}`
+                }
+            });
+            if (response.ok) {
+                nameComData = await response.json();
+            }
+        }
+
+        return {
+            dbDomain: JSON.parse(JSON.stringify(dbDomain)),
+            nameComData
+        };
+    } catch (err: any) {
+        console.error('Failed to get domain details', err);
+        return { error: 'Failed to fetch domain details.' };
+    }
+}
+
+export async function toggleDomainAutorenew(domainId: string, currentState: boolean) {
+    const cookieStore = await cookies();
+    const pbAuth = cookieStore.get('pb_auth')?.value;
+
+    if (!pbAuth) return { error: 'Not authenticated' };
+
+    const pb = new PocketBase(pbUrl);
+    pb.authStore.save(pbAuth, null);
+
+    if (!pb.authStore.isValid) return { error: 'Not authenticated' };
+
+    try {
+        await pb.collection('users').authRefresh();
+
+        // We assume you have added a boolean 'autorenew' field to domains collection
+        // If not, please add it! PocketBase will just ignore it if it doesn't exist but we try to update.
+        await pb.collection('domains').update(domainId, { autorenew: !currentState });
+        return { success: true };
+    } catch (err: any) {
+        console.error('Failed to toggle autorenew', err);
+        return { error: 'Failed to update auto-renewal status.' };
+    }
+}
