@@ -34,18 +34,6 @@ export default async function DomainsLayout({
 
     return (
         <>
-            <div style={{ position: 'absolute', top: '1.5rem', right: '2rem', zIndex: 1200 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                        Logged in as <strong style={{ color: 'white' }}>{user?.email}</strong>
-                    </span>
-                    <form action={logout}>
-                        <button type="submit" className="btn btn-outline" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>
-                            Logout
-                        </button>
-                    </form>
-                </div>
-            </div>
             {children}
         </>
     );
