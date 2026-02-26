@@ -28,9 +28,7 @@ export async function checkAdmin() {
         // We assume an 'isAdmin' or 'role' field exists.
         // If not, you might need to update your PocketBase schema to include 'role'='admin'
         if (user?.role !== 'admin' && user?.role !== 'master') {
-            // For testing purposes, we might allow it if they are the only user, but let's strictly check 'role'
-            // If role field doesn't exist, we will treat them as regular user.
-            // redirect('/domains'); // Uncomment to enforce strictly
+            redirect('/domains'); // Throw them out to normal dashboard
         }
 
         return { pb, user };

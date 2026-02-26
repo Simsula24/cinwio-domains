@@ -1,5 +1,10 @@
 "use server";
 
+import PocketBase from 'pocketbase';
+import { cookies } from 'next/headers';
+
+const pbUrl = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'https://domaindb.cinwio.com/';
+
 const isProduction = process.env.NODE_ENV === 'production';
 
 const NAMECOM_API_URL = isProduction
@@ -73,5 +78,34 @@ export async function searchDomain(keyword: string): Promise<{ results?: DomainS
     } catch (err: any) {
         console.error('Domain search error:', err);
         return { error: 'An unexpected error occurred while searching for domains.' };
+    }
+}
+
+export async function getUserDomains() {
+    const cookieStore = await cookies();
+    const pbAuth = cookieStore.get('pb_auth')?.value;
+
+    if (!pbAuth) {
+        return { domains: [], error: 'Not authenticated' };
+    }
+
+    const pb = new PocketBase(pbUrl);
+    pb.authStore.save(pbAuth, null);
+
+    if (!pb.authStore.isValid) {
+        return { domains: [], error: 'Not authenticated' };
+    }
+
+    try {
+        await pb.collection('users').authRefresh();
+
+        const domains = await pb.collection('domains').getFullList({
+            filter: `user = "${pb.authStore.model?.id}"`,
+            sort: '-created'
+        });
+        return { domains: JSON.parse(JSON.stringify(domains)) };
+    } catch (err: any) {
+        console.error('Failed to get user domains', err);
+        return { domains: [], error: 'Failed to fetch your domains.' };
     }
 }
