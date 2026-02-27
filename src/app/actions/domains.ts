@@ -192,3 +192,91 @@ export async function toggleDomainAutorenew(domainId: string, currentState: bool
         return { error: 'Failed to update auto-renewal status.' };
     }
 }
+
+export async function updateDomainNameservers(domainName: string, nameservers: string[]) {
+    const cookieStore = await cookies();
+    const pbAuth = cookieStore.get('pb_auth')?.value;
+    if (!pbAuth) return { error: 'Not authenticated' };
+
+    const pb = new PocketBase(pbUrl);
+    pb.authStore.save(pbAuth, null);
+    if (!pb.authStore.isValid) return { error: 'Not authenticated' };
+
+    try {
+        await pb.collection('users').authRefresh();
+        const domains = await pb.collection('domains').getFullList({
+            filter: `user = "${pb.authStore.model?.id}" && domainName = "${domainName}"`,
+        });
+
+        if (domains.length === 0) return { error: 'Domain not found or unauthorized' };
+
+        if (!NAMECOM_API_USERNAME || !NAMECOM_API_TOKEN) {
+            return { error: 'Name.com API credentials are not configured properly.' };
+        }
+
+        const authString = Buffer.from(`${NAMECOM_API_USERNAME}:${NAMECOM_API_TOKEN}`).toString('base64');
+        const response = await fetch(`${NAMECOM_API_URL}/v4/domains/${domainName}:setNameservers`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Basic ${authString}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ nameservers })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Name.com API Error:', errorText);
+            return { error: 'Failed to update Name.com nameservers.' };
+        }
+
+        return { success: true };
+    } catch (err: any) {
+        console.error('Failed to update nameservers', err);
+        return { error: 'An unexpected error occurred.' };
+    }
+}
+
+export async function updateDomainContacts(domainName: string, contacts: any) {
+    const cookieStore = await cookies();
+    const pbAuth = cookieStore.get('pb_auth')?.value;
+    if (!pbAuth) return { error: 'Not authenticated' };
+
+    const pb = new PocketBase(pbUrl);
+    pb.authStore.save(pbAuth, null);
+    if (!pb.authStore.isValid) return { error: 'Not authenticated' };
+
+    try {
+        await pb.collection('users').authRefresh();
+        const domains = await pb.collection('domains').getFullList({
+            filter: `user = "${pb.authStore.model?.id}" && domainName = "${domainName}"`,
+        });
+
+        if (domains.length === 0) return { error: 'Domain not found or unauthorized' };
+
+        if (!NAMECOM_API_USERNAME || !NAMECOM_API_TOKEN) {
+            return { error: 'Name.com API credentials are not configured properly.' };
+        }
+
+        const authString = Buffer.from(`${NAMECOM_API_USERNAME}:${NAMECOM_API_TOKEN}`).toString('base64');
+        const response = await fetch(`${NAMECOM_API_URL}/v4/domains/${domainName}:setContacts`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Basic ${authString}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ contacts })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Name.com API Error:', errorText);
+            return { error: 'Failed to update Name.com contact information.' };
+        }
+
+        return { success: true };
+    } catch (err: any) {
+        console.error('Failed to update contacts', err);
+        return { error: 'An unexpected error occurred.' };
+    }
+}
