@@ -26,6 +26,9 @@ export default function LoginPage() {
                     <div className="form-group">
                         <input type="password" name="password" id="password" required placeholder=" " />
                         <label htmlFor="password">Password</label>
+                        <div style={{ textAlign: 'right', marginTop: '0.5rem' }}>
+                            <Link href="/forgot-password" className={styles.authLink} style={{ fontSize: '0.85rem' }}>Forgot password?</Link>
+                        </div>
                     </div>
 
                     <div className={styles.authActions}>

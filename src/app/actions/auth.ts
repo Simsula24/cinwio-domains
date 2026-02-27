@@ -86,3 +86,42 @@ export async function logout() {
     cookieStore.delete('pb_auth');
     redirect('/login');
 }
+
+export async function requestPasswordReset(prevState: any, formData: FormData) {
+    const email = formData.get('email') as string;
+
+    if (!email) {
+        return { error: 'Email is required' };
+    }
+
+    const pb = new PocketBase(pbUrl);
+    try {
+        await pb.collection('users').requestPasswordReset(email);
+        return { success: true, message: 'If an account with this email exists, a password reset link has been sent.' };
+    } catch (err: any) {
+        // Obscure actual existence of email for security
+        return { success: true, message: 'If an account with this email exists, a password reset link has been sent.' };
+    }
+}
+
+export async function confirmPasswordReset(prevState: any, formData: FormData) {
+    const token = formData.get('token') as string;
+    const password = formData.get('password') as string;
+    const passwordConfirm = formData.get('passwordConfirm') as string;
+
+    if (!token || !password || !passwordConfirm) {
+        return { error: 'All fields are required.' };
+    }
+
+    if (password !== passwordConfirm) {
+        return { error: 'Passwords do not match.' };
+    }
+
+    const pb = new PocketBase(pbUrl);
+    try {
+        await pb.collection('users').confirmPasswordReset(token, password, passwordConfirm);
+        return { success: true, message: 'Password has been reset successfully.' };
+    } catch (err: any) {
+        return { error: 'Failed to reset password. The link may have expired or is invalid.' };
+    }
+}
