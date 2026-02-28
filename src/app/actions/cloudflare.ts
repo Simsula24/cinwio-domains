@@ -122,15 +122,21 @@ export async function createDnsRecord(domainName: string, data: { type: string, 
 type DeleteRecordResponse = { error?: string; success?: boolean };
 
 export async function deleteDnsRecord(domainName: string, recordId: string): Promise<DeleteRecordResponse> {
+    console.log(`[deleteDnsRecord] Deleting record ${recordId} for domain ${domainName}`);
     const zoneRes = await getOrCreateZone(domainName);
-    if (zoneRes.error) return { error: zoneRes.error };
+    if (zoneRes.error) {
+        console.log(`[deleteDnsRecord] zone error:`, zoneRes.error);
+        return { error: zoneRes.error };
+    }
 
     const deleteData = await fetchCf(`/zones/${zoneRes.zoneId}/dns_records/${recordId}`, {
         method: 'DELETE'
     });
 
+    console.log(`[deleteDnsRecord] Cloudflare response:`, JSON.stringify(deleteData));
+
     if (!deleteData.success) {
-        return { error: 'Failed to delete DNS record. ' + (deleteData.errors[0]?.message || '') };
+        return { error: 'Failed to delete DNS record. ' + (deleteData.errors?.[0]?.message || JSON.stringify(deleteData)) };
     }
 
     return { success: true };

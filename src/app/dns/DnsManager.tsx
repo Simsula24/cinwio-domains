@@ -22,6 +22,8 @@ export default function DnsManager({ domains }: { domains: any[] }) {
 
     // Edit states
     const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
     const [editType, setEditType] = useState('A');
     const [editName, setEditName] = useState('');
     const [editContent, setEditContent] = useState('');
@@ -53,33 +55,47 @@ export default function DnsManager({ domains }: { domains: any[] }) {
         setIsSubmitting(true);
         const name = newName === '@' ? selectedDomain : (newName.includes(selectedDomain) ? newName : `${newName}.${selectedDomain}`);
 
-        const res = await createDnsRecord(selectedDomain, {
-            type: newType,
-            name: name,
-            content: newContent,
-            proxied: ['A', 'AAAA', 'CNAME'].includes(newType) ? newProxied : false,
-            ttl: 1 // 1 means Automatic in Cloudflare
-        });
+        try {
+            const res = await createDnsRecord(selectedDomain, {
+                type: newType,
+                name: name,
+                content: newContent,
+                proxied: ['A', 'AAAA', 'CNAME'].includes(newType) ? newProxied : false,
+                ttl: 1 // 1 means Automatic in Cloudflare
+            });
 
-        if (res.success) {
-            setRecords([...records, res.record]);
-            setNewName('');
-            setNewContent('');
-            setShowAddForm(false);
-        } else {
-            alert(res.error);
+            if (res?.success) {
+                setRecords(prev => [...prev, res.record]);
+                setNewName('');
+                setNewContent('');
+                setShowAddForm(false);
+            } else {
+                window.alert(res?.error || 'Failed to create record.');
+            }
+        } catch (error) {
+            console.error('Create error:', error);
+            window.alert('An error occurred while creating the record.');
+        } finally {
+            setIsSubmitting(false);
         }
-        setIsSubmitting(false);
     };
 
     const handleDelete = async (recordId: string) => {
-        if (!confirm('Are you sure you want to delete this DNS record?')) return;
+        setDeletingId(recordId);
 
-        const res = await deleteDnsRecord(selectedDomain, recordId);
-        if (res.success) {
-            setRecords(records.filter(r => r.id !== recordId));
-        } else {
-            alert(res.error);
+        try {
+            const res = await deleteDnsRecord(selectedDomain, recordId);
+            if (res?.success) {
+                setRecords(prev => prev.filter(r => r.id !== recordId));
+            } else {
+                window.alert(res?.error || 'Failed to delete record.');
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            window.alert('An error occurred while deleting the record.');
+        } finally {
+            setDeletingId(null);
+            setConfirmDeleteId(null);
         }
     };
 
@@ -97,21 +113,27 @@ export default function DnsManager({ domains }: { domains: any[] }) {
         setIsSubmitting(true);
         const name = editName === '@' ? selectedDomain : (editName.includes(selectedDomain) ? editName : `${editName}.${selectedDomain}`);
 
-        const res = await updateDnsRecord(selectedDomain, recordId, {
-            type: editType,
-            name: name,
-            content: editContent,
-            proxied: ['A', 'AAAA', 'CNAME'].includes(editType) ? editProxied : false,
-            ttl: 1
-        });
+        try {
+            const res = await updateDnsRecord(selectedDomain, recordId, {
+                type: editType,
+                name: name,
+                content: editContent,
+                proxied: ['A', 'AAAA', 'CNAME'].includes(editType) ? editProxied : false,
+                ttl: 1
+            });
 
-        if (res.success) {
-            setRecords(records.map(r => r.id === recordId ? res.record : r));
-            setEditingRecordId(null);
-        } else {
-            alert(res.error);
+            if (res?.success) {
+                setRecords(prev => prev.map(r => r.id === recordId ? res.record : r));
+                setEditingRecordId(null);
+            } else {
+                window.alert(res?.error || 'Failed to update record.');
+            }
+        } catch (error) {
+            console.error('Update error:', error);
+            window.alert('An error occurred while updating the record.');
+        } finally {
+            setIsSubmitting(false);
         }
-        setIsSubmitting(false);
     };
 
     return (
@@ -261,10 +283,22 @@ export default function DnsManager({ domains }: { domains: any[] }) {
                                                     )}
                                                 </td>
                                                 <td>
-                                                    <div style={{ display: 'flex', gap: '1rem' }}>
-                                                        <button className={styles.actionBtn} onClick={() => handleEditRecord(record)}>{t('common', 'edit')}</button>
-                                                        <button className={styles.actionBtnDel} onClick={() => handleDelete(record.id)}>{t('common', 'delete')}</button>
-                                                    </div>
+                                                    {confirmDeleteId === record.id ? (
+                                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                                            <span style={{ fontSize: '0.85rem', color: '#ef4444' }}>{deletingId === record.id ? 'Deleting...' : 'Are you sure?'}</span>
+                                                            <button className={styles.actionBtnDel} onClick={() => handleDelete(record.id)} disabled={deletingId === record.id}>
+                                                                {deletingId === record.id ? '...' : 'Yes'}
+                                                            </button>
+                                                            <button className={styles.actionBtn} style={{ color: 'var(--text-secondary)' }} onClick={() => setConfirmDeleteId(null)} disabled={deletingId === record.id}>
+                                                                No
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div style={{ display: 'flex', gap: '1rem' }}>
+                                                            <button className={styles.actionBtn} onClick={() => handleEditRecord(record)}>{t('common', 'edit')}</button>
+                                                            <button className={styles.actionBtnDel} onClick={() => setConfirmDeleteId(record.id)}>{t('common', 'delete')}</button>
+                                                        </div>
+                                                    )}
                                                 </td>
                                             </>
                                         )}
