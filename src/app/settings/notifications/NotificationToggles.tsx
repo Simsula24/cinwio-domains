@@ -3,6 +3,7 @@
 import { useState } from "react";
 import styles from "../settings.module.css";
 import { toggleUserNotification } from "../../actions/settings";
+import { useI18n } from "../../I18nProvider";
 
 export default function NotificationToggles({
     initialMarketing,
@@ -14,6 +15,7 @@ export default function NotificationToggles({
     const [marketing, setMarketing] = useState(initialMarketing);
     const [billing, setBilling] = useState(initialBilling);
     const [isUpdating, setIsUpdating] = useState(false);
+    const { t } = useI18n();
 
     const handleToggle = async (type: 'marketingEmails' | 'billingEmails', currentValue: boolean) => {
         setIsUpdating(true);
@@ -36,8 +38,8 @@ export default function NotificationToggles({
         <div>
             <div className={styles.toggleWrapper}>
                 <div className={styles.toggleInfo}>
-                    <span className={styles.toggleTitle}>Marketing & Promos</span>
-                    <span className={styles.toggleDesc}>Receive offers, tutorials, and domain sales updates.</span>
+                    <span className={styles.toggleTitle}>{t('settings.notifications', 'marketingTitle')}</span>
+                    <span className={styles.toggleDesc}>{t('settings.notifications', 'marketingDesc')}</span>
                 </div>
                 <label className={styles.switch}>
                     <input
@@ -52,8 +54,8 @@ export default function NotificationToggles({
 
             <div className={styles.toggleWrapper}>
                 <div className={styles.toggleInfo}>
-                    <span className={styles.toggleTitle}>Billing Alerts</span>
-                    <span className={styles.toggleDesc}>Receive notifications about upcoming payments and expiring domains.</span>
+                    <span className={styles.toggleTitle}>{t('settings.notifications', 'billingTitle')}</span>
+                    <span className={styles.toggleDesc}>{t('settings.notifications', 'billingDesc')}</span>
                 </div>
                 <label className={styles.switch}>
                     <input

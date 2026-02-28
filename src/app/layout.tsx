@@ -6,6 +6,8 @@ import React from "react";
 import { cookies } from "next/headers";
 import PocketBase from "pocketbase";
 import { logout } from "./actions/auth";
+import { getTranslation } from "./i18n";
+import { I18nProvider } from "./I18nProvider";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-heading",
@@ -43,55 +45,61 @@ export default async function RootLayout({
       // Token might be expired or invalid
     }
   }
-  return (
-    <html lang="en">
-      <body className={`${outfit.className} ${spaceGrotesk.variable} ${outfit.variable}`}>
-        <header className="header">
-          <div className="container nav-container">
-            <Link href="/" className="logo">
-              CINWIO<span className="highlight">.</span> Domains
-            </Link>
-            <nav className="nav">
-              <ul className="nav-list">
-                <li>
-                  <Link href="/domains" className="nav-link">Domains</Link>
-                </li>
-                <li>
-                  <Link href="/dns" className="nav-link">DNS</Link>
-                </li>
-                {user ? (
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginLeft: '1rem' }}>
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                      Logged in as <strong style={{ color: 'white' }}>{user.email}</strong>
-                    </span>
-                    {(user.role === 'admin' || user.role === 'master') && (
-                      <Link href="/admin" className="btn btn-outline" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem', background: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa', borderColor: 'rgba(139, 92, 246, 0.3)' }}>Admin</Link>
-                    )}
-                    <Link href="/settings" className="btn btn-outline" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>Settings</Link>
-                    <form action={logout}>
-                      <button type="submit" className="btn btn-primary" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>
-                        Logout
-                      </button>
-                    </form>
-                  </li>
-                ) : (
-                  <>
-                    <li>
-                      <Link href="/login" className="btn btn-outline">Login</Link>
-                    </li>
-                    <li>
-                      <Link href="/register" className="btn btn-primary">Register</Link>
-                    </li>
-                  </>
-                )}
-              </ul>
-            </nav>
-          </div>
-        </header>
 
-        <main className="main-content">
-          {children}
-        </main>
+  const lang = user?.language || 'en';
+  const t = (section: any, key: string) => getTranslation(lang, section, key);
+
+  return (
+    <html lang={lang}>
+      <body className={`${outfit.className} ${spaceGrotesk.variable} ${outfit.variable}`}>
+        <I18nProvider lang={lang}>
+          <header className="header">
+            <div className="container nav-container">
+              <Link href="/" className="logo">
+                CINWIO<span className="highlight">.</span> Domains
+              </Link>
+              <nav className="nav">
+                <ul className="nav-list">
+                  <li>
+                    <Link href="/domains" className="nav-link">{t('nav', 'domains')}</Link>
+                  </li>
+                  <li>
+                    <Link href="/dns" className="nav-link">{t('nav', 'dns')}</Link>
+                  </li>
+                  {user ? (
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginLeft: '1rem' }}>
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                        {t('nav', 'loggedInAs')} <strong style={{ color: 'white' }}>{user.email}</strong>
+                      </span>
+                      {(user.role === 'admin' || user.role === 'master') && (
+                        <Link href="/admin" className="btn btn-outline" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem', background: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa', borderColor: 'rgba(139, 92, 246, 0.3)' }}>{t('nav', 'admin')}</Link>
+                      )}
+                      <Link href="/settings" className="btn btn-outline" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>{t('nav', 'settings')}</Link>
+                      <form action={logout}>
+                        <button type="submit" className="btn btn-primary" style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>
+                          {t('nav', 'logout')}
+                        </button>
+                      </form>
+                    </li>
+                  ) : (
+                    <>
+                      <li>
+                        <Link href="/login" className="btn btn-outline">{t('nav', 'login')}</Link>
+                      </li>
+                      <li>
+                        <Link href="/register" className="btn btn-primary">{t('nav', 'register')}</Link>
+                      </li>
+                    </>
+                  )}
+                </ul>
+              </nav>
+            </div>
+          </header>
+
+          <main className="main-content">
+            {children}
+          </main>
+        </I18nProvider>
       </body>
     </html>
   );

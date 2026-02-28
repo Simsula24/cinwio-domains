@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import styles from './page.module.css';
 import { getDnsRecords, createDnsRecord, deleteDnsRecord, updateDnsRecord } from '../actions/cloudflare';
+import { useI18n } from "../I18nProvider";
 
 export default function DnsManager({ domains }: { domains: any[] }) {
+    const { t } = useI18n();
     const [selectedDomain, setSelectedDomain] = useState(domains.length > 0 ? domains[0]?.domainName : '');
     const [records, setRecords] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -116,8 +118,8 @@ export default function DnsManager({ domains }: { domains: any[] }) {
         <>
             <div className={styles.dnsHeader}>
                 <div>
-                    <h2>DNS Management</h2>
-                    <p className={styles.subtitle}>Powered by Cloudflare</p>
+                    <h2>{t('dns', 'title')}</h2>
+                    <p className={styles.subtitle}>{t('dns', 'subtitle')}</p>
                 </div>
                 {domains.length > 0 && (
                     <div className={styles.selectorWrapper}>
@@ -142,14 +144,14 @@ export default function DnsManager({ domains }: { domains: any[] }) {
 
             <div className={styles.recordsSection}>
                 <div className={styles.recordsHeader}>
-                    <h3>DNS Records</h3>
+                    <h3>{t('dns', 'records')}</h3>
                     <button
                         className="btn btn-primary"
                         style={{ padding: '0.6rem 1.5rem', fontSize: '0.8rem' }}
                         onClick={() => setShowAddForm(!showAddForm)}
                         disabled={!selectedDomain}
                     >
-                        {showAddForm ? 'Cancel' : 'Add Record'}
+                        {showAddForm ? t('common', 'cancel') : t('dns', 'addRecord')}
                     </button>
                 </div>
 
@@ -183,7 +185,7 @@ export default function DnsManager({ domains }: { domains: any[] }) {
                             </div>
                             <div>
                                 <button type="submit" className="btn btn-primary" style={{ height: '48px', padding: '0 1.5rem' }} disabled={isSubmitting}>
-                                    {isSubmitting ? 'Saving...' : 'Save'}
+                                    {isSubmitting ? t('common', 'saving') : t('common', 'save')}
                                 </button>
                             </div>
                         </form>
@@ -238,8 +240,8 @@ export default function DnsManager({ domains }: { domains: any[] }) {
                                                 </td>
                                                 <td>
                                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                        <button className={styles.actionBtn} onClick={() => handleUpdateRecord(record.id)} disabled={isSubmitting}>Save</button>
-                                                        <button className={styles.actionBtnDel} style={{ color: 'var(--text-secondary)' }} onClick={() => setEditingRecordId(null)}>Cancel</button>
+                                                        <button className={styles.actionBtn} onClick={() => handleUpdateRecord(record.id)} disabled={isSubmitting}>{t('common', 'save')}</button>
+                                                        <button className={styles.actionBtnDel} style={{ color: 'var(--text-secondary)' }} onClick={() => setEditingRecordId(null)}>{t('common', 'cancel')}</button>
                                                     </div>
                                                 </td>
                                             </>
@@ -260,8 +262,8 @@ export default function DnsManager({ domains }: { domains: any[] }) {
                                                 </td>
                                                 <td>
                                                     <div style={{ display: 'flex', gap: '1rem' }}>
-                                                        <button className={styles.actionBtn} onClick={() => handleEditRecord(record)}>Edit</button>
-                                                        <button className={styles.actionBtnDel} onClick={() => handleDelete(record.id)}>Delete</button>
+                                                        <button className={styles.actionBtn} onClick={() => handleEditRecord(record)}>{t('common', 'edit')}</button>
+                                                        <button className={styles.actionBtnDel} onClick={() => handleDelete(record.id)}>{t('common', 'delete')}</button>
                                                     </div>
                                                 </td>
                                             </>
@@ -271,7 +273,7 @@ export default function DnsManager({ domains }: { domains: any[] }) {
                             ) : (
                                 <tr>
                                     <td colSpan={6} style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-secondary)' }}>
-                                        {selectedDomain ? 'No records found for this domain.' : 'No domain selected.'}
+                                        {selectedDomain ? t('dns', 'noRecords') : t('dns', 'noDomain')}
                                     </td>
                                 </tr>
                             )}

@@ -3,10 +3,12 @@
 import { useState } from "react";
 import styles from "../settings.module.css";
 import { updateLanguage } from "../../actions/settings";
+import { useI18n } from "../../I18nProvider";
 
 export default function LanguageSelector({ initialLanguage }: { initialLanguage: string }) {
     const [language, setLanguage] = useState(initialLanguage);
     const [isUpdating, setIsUpdating] = useState(false);
+    const { t } = useI18n();
 
     const handleLanguageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newLang = e.target.value;
@@ -27,7 +29,7 @@ export default function LanguageSelector({ initialLanguage }: { initialLanguage:
 
     return (
         <div className={styles.formGroup}>
-            <label htmlFor="language">Dashboard Language</label>
+            <label htmlFor="language">{t('settings.preferences', 'languageLabel')}</label>
             <select
                 id="language"
                 name="language"
@@ -44,7 +46,7 @@ export default function LanguageSelector({ initialLanguage }: { initialLanguage:
                 <option value="de">Deutsch (DE)</option>
             </select>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-                {isUpdating ? 'Saving preference...' : 'Select your preferred language for the reseller panel.'}
+                {isUpdating ? t('settings.preferences', 'saving') : t('settings.preferences', 'languageDesc')}
             </p>
         </div>
     );

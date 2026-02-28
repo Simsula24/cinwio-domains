@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import PocketBase from "pocketbase";
 import { redirect } from "next/navigation";
 import SidebarNav from "./SidebarNav";
+import { getTranslation } from "../i18n";
 
 export default async function SettingsLayout({
     children,
@@ -38,10 +39,13 @@ export default async function SettingsLayout({
         redirect('/login');
     }
 
+    const lang = user?.language || 'en';
+    const t = (section: string, key: string) => getTranslation(lang, section, key);
+
     return (
         <div className={styles.layout}>
             <aside className={styles.sidebar}>
-                <h1 className={styles.sidebarTitle}>Settings</h1>
+                <h1 className={styles.sidebarTitle}>{t('settings.sidebar', 'title')}</h1>
                 <SidebarNav />
             </aside>
             <main className={styles.content}>

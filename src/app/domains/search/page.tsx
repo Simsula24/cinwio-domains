@@ -4,12 +4,14 @@ import Link from "next/link";
 import styles from "./page.module.css";
 import { useActionState, useState } from "react";
 import { searchDomain, DomainSearchResult } from "../../actions/domains";
+import { useI18n } from "../../I18nProvider";
 
 export default function DomainSearch() {
     const [keyword, setKeyword] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const [results, setResults] = useState<DomainSearchResult[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const { t } = useI18n();
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -36,13 +38,13 @@ export default function DomainSearch() {
     return (
         <div className={styles.searchContainer}>
             <div className={styles.searchHeader}>
-                <h2>Find Your Perfect Domain</h2>
-                <p className={styles.subtitle}>Instantly search availability across hundreds of extensions.</p>
+                <h2>{t('search', 'title')}</h2>
+                <p className={styles.subtitle}>{t('search', 'subtitle')}</p>
 
                 <form onSubmit={handleSearch} className={styles.searchBar}>
                     <input
                         type="text"
-                        placeholder="Enter a domain name (e.g., myawesomeidea.com)"
+                        placeholder={t('search', 'placeholder')}
                         className={styles.searchInput}
                         value={keyword}
                         onChange={(e) => setKeyword(e.target.value)}
@@ -54,7 +56,7 @@ export default function DomainSearch() {
                         disabled={isSearching || !keyword.trim()}
                         style={{ opacity: isSearching ? 0.7 : 1 }}
                     >
-                        {isSearching ? 'Searching...' : 'Search'}
+                        {isSearching ? t('search', 'btnSearching') : t('search', 'btnSearch')}
                     </button>
                 </form>
             </div>
@@ -73,9 +75,9 @@ export default function DomainSearch() {
                                 {result.domainName}
                             </h3>
                             {result.purchasable ? (
-                                <span className={styles.statusAvailable}>Available</span>
+                                <span className={styles.statusAvailable}>{t('search', 'available')}</span>
                             ) : (
-                                <span className={styles.statusTaken}>Taken</span>
+                                <span className={styles.statusTaken}>{t('search', 'taken')}</span>
                             )}
                         </div>
 
@@ -83,11 +85,11 @@ export default function DomainSearch() {
                             {result.purchasable ? (
                                 <>
                                     <span className={styles.price}>${result.purchasePrice?.toFixed(2)}/yr</span>
-                                    <button className="btn btn-primary" style={{ padding: '0.6rem 1.5rem', fontSize: '0.8rem' }}>Add</button>
+                                    <button className="btn btn-primary" style={{ padding: '0.6rem 1.5rem', fontSize: '0.8rem' }}>{t('search', 'add')}</button>
                                 </>
                             ) : (
                                 <button className="btn btn-outline" style={{ padding: '0.6rem 1.5rem', fontSize: '0.8rem', opacity: 0.5, cursor: 'not-allowed' }} disabled>
-                                    Unavailable
+                                    {t('search', 'unavailable')}
                                 </button>
                             )}
                         </div>
@@ -100,7 +102,7 @@ export default function DomainSearch() {
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
-                        <p>Start your search above to see available domains and pricing.</p>
+                        <p>{t('search', 'emptyText')}</p>
                     </div>
                 )}
             </div>

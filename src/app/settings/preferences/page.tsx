@@ -3,6 +3,7 @@ import PocketBase from "pocketbase";
 import LanguageSelector from "./LanguageSelector";
 import styles from "../settings.module.css";
 import { redirect } from "next/navigation";
+import { getTranslation } from "../../i18n";
 
 export default async function PreferencesPage() {
     const cookieStore = await cookies();
@@ -16,20 +17,17 @@ export default async function PreferencesPage() {
 
     const user = pb.authStore.model;
     const currentLanguage = user?.language || 'en';
+    const t = (section: string, key: string) => getTranslation(currentLanguage, section, key);
 
     return (
         <div>
             <div className={styles.contentHeader}>
-                <h2>Global Preferences</h2>
-                <p className={styles.contentSubtitle}>Customize your dashboard experience.</p>
+                <h2>{t('settings.preferences', 'title')}</h2>
+                <p className={styles.contentSubtitle}>{t('settings.preferences', 'subtitle')}</p>
             </div>
 
             <LanguageSelector initialLanguage={currentLanguage} />
 
-            <div className={styles.warningBlock}>
-                <h3>Database Config</h3>
-                <p>Ensure your PocketBase <code>users</code> collection contains a string or select field named <code>language</code> if this toggle results in a database schema error.</p>
-            </div>
         </div>
     );
 }
