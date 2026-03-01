@@ -22,9 +22,14 @@ export default async function DomainsDashboard() {
                     <h2>{t('domains', 'title')}</h2>
                     <p className={styles.subtitle}>{t('domains', 'subtitle')}</p>
                 </div>
-                <Link href="/domains/search" className="btn btn-primary">
-                    {t('domains', 'buyNew')}
-                </Link>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <Link href="/domains/transfer" className="btn btn-outline" style={{ background: 'var(--glass-bg)', borderColor: 'var(--glass-border)' }}>
+                        {t('transfer', 'title')}
+                    </Link>
+                    <Link href="/domains/search" className="btn btn-primary">
+                        {t('domains', 'buyNew')}
+                    </Link>
+                </div>
             </div>
 
             {error && (

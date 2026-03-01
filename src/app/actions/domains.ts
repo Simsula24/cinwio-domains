@@ -280,3 +280,114 @@ export async function updateDomainContacts(domainName: string, contacts: any) {
         return { error: 'An unexpected error occurred.' };
     }
 }
+
+export async function transferDomain(domainName: string, authCode: string) {
+    const cookieStore = await cookies();
+    const pbAuth = cookieStore.get('pb_auth')?.value;
+    if (!pbAuth) return { error: 'Not authenticated' };
+
+    const pb = new PocketBase(pbUrl);
+    pb.authStore.save(pbAuth, null);
+    if (!pb.authStore.isValid) return { error: 'Not authenticated' };
+
+    try {
+        await pb.collection('users').authRefresh();
+
+        if (!NAMECOM_API_USERNAME || !NAMECOM_API_TOKEN) {
+            return { error: 'Name.com API credentials are not configured properly.' };
+        }
+
+        const authString = Buffer.from(`${NAMECOM_API_USERNAME}:${NAMECOM_API_TOKEN}`).toString('base64');
+        const response = await fetch(`${NAMECOM_API_URL}/v4/transfers`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Basic ${authString}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                domainName,
+                authCode
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Name.com API Error:', errorText);
+
+            let errorMsg = 'Failed to initiate domain transfer.';
+            try {
+                const parsed = JSON.parse(errorText);
+                if (parsed.message) errorMsg = parsed.message;
+            } catch (e) { }
+
+            return { error: errorMsg };
+        }
+
+        // Create a pending domain entry in PocketBase
+        await pb.collection('domains').create({
+            domainName: domainName,
+            user: pb.authStore.model?.id,
+            status: 'transferring',
+            autorenew: false
+        });
+
+        return { success: true };
+    } catch (err: any) {
+        console.error('Failed to transfer domain', err);
+        return { error: 'An unexpected error occurred during transfer.' };
+    }
+}
+
+export async function getTransferPricing(domainName: string) {
+    if (!NAMECOM_API_USERNAME || !NAMECOM_API_TOKEN) {
+        return { error: 'Name.com API credentials are not configured properly.' };
+    }
+
+    const authString = Buffer.from(`${NAMECOM_API_USERNAME}:${NAMECOM_API_TOKEN}`).toString('base64');
+
+    try {
+        // v4 API check availability returns transfer and renewal prices if applicable
+        const response = await fetch(`${NAMECOM_API_URL}/v4/domains/${domainName}:getPricing`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Basic ${authString}`
+            }
+        });
+
+        if (!response.ok) {
+            // Fallback to checkAvailability if getPricing is not directly supported this way
+            const availResponse = await fetch(`${NAMECOM_API_URL}/v4/domains:checkAvailability`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Basic ${authString}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    domainNames: [domainName]
+                })
+            });
+
+            if (availResponse.ok) {
+                const availData = await availResponse.json();
+                if (availData.results && availData.results.length > 0) {
+                    const domainInfo = availData.results[0];
+                    return {
+                        transferPrice: domainInfo.transferPrice || domainInfo.purchasePrice || 0,
+                        renewalPrice: domainInfo.renewalPrice || 0
+                    };
+                }
+            }
+
+            return { error: 'Failed to fetch pricing information.' };
+        }
+
+        const data = await response.json();
+        return {
+            transferPrice: data.transferPrice || data.purchasePrice || 0,
+            renewalPrice: data.renewalPrice || 0
+        };
+    } catch (err) {
+        console.error('Failed to get pricing', err);
+        return { error: 'An unexpected error occurred while fetching pricing.' };
+    }
+}

@@ -13,7 +13,7 @@ export default function Home() {
             <span className={`${styles.revealText} ${styles.highlightText}`}>Domain Name</span>
           </h1>
           <p className={styles.heroSubtitle}>
-            Search, register, and manage your domains and DNS easily. Powered by Cloudflare & Name.com
+            Search, register, and manage your domains and DNS easily.
           </p>
           <div className={styles.heroCta}>
             <Link href="/domains/search" className="btn btn-primary">Search Domains</Link>
