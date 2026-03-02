@@ -66,6 +66,14 @@ export default function DomainTransfer() {
         }
     };
 
+    const nextPaymentDate = new Date();
+    nextPaymentDate.setFullYear(nextPaymentDate.getFullYear() + 1);
+    const formattedDate = nextPaymentDate.toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
     return (
         <div className={styles.transferContainer}>
             <div className={styles.transferHeader}>
@@ -138,7 +146,7 @@ export default function DomainTransfer() {
 
                     <div className={styles.timelineContainer}>
                         <div className={styles.timelineItem}>
-                            <div className={styles.timelineDot}></div>
+                            <div className={`${styles.timelineDot} ${styles.timelineDotActive}`}></div>
                             <div className={styles.timelineContent}>
                                 <div className={styles.timelineHeader}>
                                     <span className={styles.timelineTitle}>{t('transfer', 'dueNow')}</span>
@@ -153,8 +161,6 @@ export default function DomainTransfer() {
                             </div>
                         </div>
 
-                        <div className={styles.timelineLine}></div>
-
                         <div className={styles.timelineItem}>
                             <div className={styles.timelineDot}></div>
                             <div className={styles.timelineContent}>
@@ -168,8 +174,6 @@ export default function DomainTransfer() {
                             </div>
                         </div>
 
-                        <div className={styles.timelineLine}></div>
-
                         <div className={styles.timelineItem}>
                             <div className={`${styles.timelineDot} ${styles.timelineDotFuture}`}></div>
                             <div className={styles.timelineContent}>
@@ -180,7 +184,7 @@ export default function DomainTransfer() {
                                     </span>
                                 </div>
                                 <div className={styles.timelineDesc}>
-                                    <small className={styles.futureText}>{t('transfer', 'uponRenewal')}</small>
+                                    <small className={styles.futureText}>{t('transfer', 'uponRenewal')} ({formattedDate})</small>
                                 </div>
                             </div>
                         </div>
