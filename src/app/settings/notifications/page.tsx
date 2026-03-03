@@ -20,6 +20,8 @@ export default async function NotificationsPage() {
     // Safety fallback - if properties don't exist yet on DB schema
     const marketingEmails = user?.marketingEmails ?? true;
     const billingEmails = user?.billingEmails ?? true;
+    const accountSettingsEmails = user?.accountSettingsEmails ?? true;
+    const serviceStatusEmails = user?.serviceStatusEmails ?? true;
     const lang = user?.language || 'en';
     const t = (section: string, key: string) => getTranslation(lang, section, key);
 
@@ -33,6 +35,8 @@ export default async function NotificationsPage() {
             <NotificationToggles
                 initialMarketing={marketingEmails}
                 initialBilling={billingEmails}
+                initialAccountSettings={accountSettingsEmails}
+                initialServiceStatus={serviceStatusEmails}
             />
 
         </div>

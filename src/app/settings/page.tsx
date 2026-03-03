@@ -23,7 +23,14 @@ export default async function SettingsPage() {
                 <p className={styles.contentSubtitle}>{t('settings.account', 'subtitle')}</p>
             </div>
 
-            <AccountForm initialName={user?.name || ''} email={user?.email || ''} />
+            <AccountForm
+                initialName={user?.name || ''}
+                email={user?.email || ''}
+                address={user?.address || ''}
+                phone={user?.phone || ''}
+                company={user?.company || ''}
+                currency={user?.currency || 'USD'}
+            />
         </div>
     );
 }

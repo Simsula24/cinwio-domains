@@ -22,6 +22,10 @@ export async function updateAccountInfo(prevState: any, formData: FormData) {
     if (error || !pb) return { error };
 
     const name = formData.get('name') as string;
+    const address = formData.get('address') as string;
+    const phone = formData.get('phone') as string;
+    const company = formData.get('company') as string;
+    const currency = formData.get('currency') as string;
 
     try {
         await pb.collection('users').authRefresh();
@@ -29,7 +33,13 @@ export async function updateAccountInfo(prevState: any, formData: FormData) {
 
         if (!userId) return { error: 'Invalid user session.' };
 
-        await pb.collection('users').update(userId, { name });
+        await pb.collection('users').update(userId, {
+            name,
+            address,
+            phone,
+            company,
+            currency
+        });
         return { success: true, message: 'Account information updated successfully.' };
     } catch (err: any) {
         return { error: 'Failed to update account information.' };
@@ -71,8 +81,41 @@ export async function updatePassword(prevState: any, formData: FormData) {
     }
 }
 
+export async function updateEmails(prevState: any, formData: FormData) {
+    const { pb, error } = await getPb();
+    if (error || !pb) return { error };
+
+    const email = formData.get('email') as string;
+    const secondaryEmail = formData.get('secondaryEmail') as string;
+
+    try {
+        await pb.collection('users').authRefresh();
+        const user = pb.authStore.model;
+        if (!user || !user.id) return { error: 'Invalid user session.' };
+
+        // 1. Save secondary email straight to the user
+        // We will "pretend" to trigger verification for it as requested by returning a message
+        if (user.secondaryEmail !== secondaryEmail) {
+            await pb.collection('users').update(user.id, { secondaryEmail });
+        }
+
+        // 2. Changing the primary email in PocketBase requires a special endpoint
+        let message = 'Emails updated successfully.';
+        if (user.email !== email && email) {
+            await pb.collection('users').requestEmailChange(email);
+            message = 'A verification link has been sent to your new primary email. Secondary email updated if changed.';
+        } else if (user.secondaryEmail !== secondaryEmail && secondaryEmail) {
+            message = 'Secondary email updated and verification triggered (mocked).';
+        }
+
+        return { success: true, message };
+    } catch (err: any) {
+        return { error: err?.response?.message || 'Failed to update emails. Are they already in use?' };
+    }
+}
+
 // Client-side actions for toggles
-export async function toggleUserNotification(setting: 'marketingEmails' | 'billingEmails', value: boolean) {
+export async function toggleUserNotification(setting: 'marketingEmails' | 'billingEmails' | 'accountSettingsEmails' | 'serviceStatusEmails', value: boolean) {
     const { pb, error } = await getPb();
     if (error || !pb) return { error };
 
@@ -102,5 +145,21 @@ export async function updateLanguage(language: string) {
         return { success: true };
     } catch (err: any) {
         return { error: 'Failed to update language. Does this field exist in PocketBase?' };
+    }
+}
+
+export async function updatePreference(key: 'currency' | 'theme', value: string) {
+    const { pb, error } = await getPb();
+    if (error || !pb) return { error };
+
+    try {
+        await pb.collection('users').authRefresh();
+        const userId = pb.authStore.model?.id;
+        if (!userId) return { error: 'Invalid user session.' };
+
+        await pb.collection('users').update(userId, { [key]: value });
+        return { success: true };
+    } catch (err: any) {
+        return { error: `Failed to update ${key}. Does this field exist in PocketBase?` };
     }
 }

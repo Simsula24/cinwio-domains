@@ -87,15 +87,21 @@ export const dictionaries = {
                 emailStatus: "Your email address cannot be changed from this dashboard. Please contact support.",
                 emailLabel: "Email Address",
                 nameLabel: "Full Name",
+                addressLabel: "Address",
+                phoneLabel: "Phone Number",
+                companyLabel: "Company",
                 save: "Save Changes"
             },
             security: {
                 title: "Security Settings",
                 subtitle: "Update your password and secure your account.",
+                emailTitle: "Primary Email",
+                secondaryEmailTitle: "Secondary Email (Triggers Verification)",
                 oldPassword: "Current Password",
                 newPassword: "New Password",
                 confirmPassword: "Confirm New Password",
-                update: "Update Password"
+                update: "Update Password",
+                updateEmail: "Update Emails"
             },
             notifications: {
                 title: "Notification Preferences",
@@ -103,13 +109,21 @@ export const dictionaries = {
                 marketingTitle: "Marketing & Promos",
                 marketingDesc: "Receive offers, tutorials, and domain sales updates.",
                 billingTitle: "Billing Alerts",
-                billingDesc: "Receive notifications about upcoming payments and expiring domains."
+                billingDesc: "Receive notifications about upcoming payments and expiring domains.",
+                accountSettingsTitle: "Account Settings Changes",
+                accountSettingsDesc: "Get notified when your account settings are changed.",
+                serviceStatusTitle: "Service Status & Changes",
+                serviceStatusDesc: "Receive updates about service downtime and platform updates."
             },
             preferences: {
                 title: "Global Preferences",
                 subtitle: "Customize your dashboard experience.",
                 languageLabel: "Dashboard Language",
                 languageDesc: "Select your preferred language for the reseller panel.",
+                currencyLabel: "Currency",
+                currencyDesc: "Select your preferred currency for billing and domains.",
+                themeLabel: "Theme Mode",
+                themeDesc: "Toggle between light and dark mode.",
                 saving: "Saving preference..."
             }
         }

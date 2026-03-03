@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import PocketBase from "pocketbase";
 import LanguageSelector from "./LanguageSelector";
+import PreferencesForm from "./PreferencesForm";
 import styles from "../settings.module.css";
 import { redirect } from "next/navigation";
 import { getTranslation } from "../../i18n";
@@ -17,6 +18,8 @@ export default async function PreferencesPage() {
 
     const user = pb.authStore.model;
     const currentLanguage = user?.language || 'en';
+    const currentCurrency = user?.currency || 'USD';
+    const currentTheme = user?.theme || 'system';
     const t = (section: string, key: string) => getTranslation(currentLanguage, section, key);
 
     return (
@@ -27,6 +30,11 @@ export default async function PreferencesPage() {
             </div>
 
             <LanguageSelector initialLanguage={currentLanguage} />
+
+            <PreferencesForm
+                initialCurrency={currentCurrency}
+                initialTheme={currentTheme}
+            />
 
         </div>
     );

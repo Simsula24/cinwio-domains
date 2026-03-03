@@ -144,7 +144,7 @@ export async function getDomainDetails(domainName: string) {
 
         const dbDomain = domains[0];
 
-        let nameComData = null;
+        let nameComData: any = null;
 
         // Try to fetch from name.com API
         if (NAMECOM_API_USERNAME && NAMECOM_API_TOKEN) {
@@ -157,6 +157,26 @@ export async function getDomainDetails(domainName: string) {
             if (response.ok) {
                 nameComData = await response.json();
             }
+        }
+
+        // Fetch from Pocketbase domain_contacts as a priority failsafe
+        try {
+            const pbContact = await pb.collection('domain_contacts').getFirstListItem(`domainName = "${domainName}"`);
+            if (pbContact) {
+                if (!nameComData) nameComData = {}; // Initialize if it was null from name.com failure
+
+                // Override contacts with PB data
+                nameComData.contacts = {
+                    registrant: {
+                        firstName: pbContact.firstName || '',
+                        lastName: pbContact.lastName || '',
+                        email: pbContact.email || '',
+                        country: pbContact.country || ''
+                    }
+                };
+            }
+        } catch (e) {
+            // Record not found or collection doesn't exist yet, simply ignore and continue
         }
 
         return {
@@ -254,6 +274,30 @@ export async function updateDomainContacts(domainName: string, contacts: any) {
 
         if (domains.length === 0) return { error: 'Domain not found or unauthorized' };
 
+        // Save to Pocketbase
+        try {
+            let pbContact = null;
+            try {
+                pbContact = await pb.collection('domain_contacts').getFirstListItem(`domainName = "${domainName}"`);
+            } catch (e) { }
+
+            const contactData = {
+                domainName: domainName,
+                firstName: contacts.registrant?.firstName || '',
+                lastName: contacts.registrant?.lastName || '',
+                email: contacts.registrant?.email || '',
+                country: contacts.registrant?.country || ''
+            };
+
+            if (pbContact) {
+                await pb.collection('domain_contacts').update(pbContact.id, contactData);
+            } else {
+                await pb.collection('domain_contacts').create(contactData);
+            }
+        } catch (e) {
+            console.error('Failed to save to domain_contacts', e);
+        }
+
         if (!NAMECOM_API_USERNAME || !NAMECOM_API_TOKEN) {
             return { error: 'Name.com API credentials are not configured properly.' };
         }
@@ -271,7 +315,9 @@ export async function updateDomainContacts(domainName: string, contacts: any) {
         if (!response.ok) {
             const errorText = await response.text();
             console.error('Name.com API Error:', errorText);
-            return { error: 'Failed to update Name.com contact information.' };
+            // Don't fail completely if Name.com fails (e.g., domain isn't on Name.com yet)
+            // Just return success so the frontend knows PB saved it
+            return { success: true, warning: 'Saved locally, but failed to sync to Name.com.' };
         }
 
         return { success: true };

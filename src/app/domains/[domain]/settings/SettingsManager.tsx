@@ -67,6 +67,9 @@ export default function SettingsManager({
         const res = await updateDomainContacts(domainName, contactData);
         if (res.success) {
             setIsEditingContact(false);
+            if (res.warning) {
+                alert(res.warning);
+            }
         } else {
             alert(res.error || 'Failed to update contact info');
         }
