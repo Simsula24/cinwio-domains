@@ -42,16 +42,16 @@ export default function ConfirmEmailForm({ token }: { token: string }) {
                 </div>
             )}
 
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Account Password</label>
+            <div className="form-group">
                 <input
                     type="password"
                     name="password"
-                    className="form-input"
-                    placeholder="Enter your current password"
+                    id="password"
+                    placeholder=" "
                     required
                     autoComplete="current-password"
                 />
+                <label htmlFor="password">Account Password</label>
             </div>
 
             <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={isPending}>
