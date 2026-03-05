@@ -47,12 +47,28 @@ export default async function RootLayout({
   }
 
   const lang = user?.language || 'en';
+  const theme = user?.theme || 'system';
+  const currency = user?.currency || 'USD';
   const t = (section: any, key: string) => getTranslation(lang, section, key);
 
   return (
-    <html lang={lang}>
+    <html lang={lang} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              var theme = '${theme}';
+              if (theme === 'system') {
+                document.documentElement.setAttribute('data-theme', window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+              } else {
+                document.documentElement.setAttribute('data-theme', theme);
+              }
+            })();
+          `
+        }} />
+      </head>
       <body className={`${outfit.className} ${spaceGrotesk.variable} ${outfit.variable}`}>
-        <I18nProvider lang={lang}>
+        <I18nProvider lang={lang} currency={currency} theme={theme}>
           <header className="header">
             <div className="container nav-container">
               <Link href="/" className="logo">

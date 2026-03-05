@@ -6,10 +6,12 @@ import { useI18n } from "../../I18nProvider";
 
 export default function EmailForm({
     initialEmail,
-    initialSecondaryEmail
+    initialSecondaryEmail,
+    initialSecondaryEmailVerified
 }: {
     initialEmail: string,
-    initialSecondaryEmail: string
+    initialSecondaryEmail: string,
+    initialSecondaryEmailVerified: boolean
 }) {
     const [state, formAction, isPending] = useActionState(updateEmails, null);
     const { t } = useI18n();
@@ -33,12 +35,21 @@ export default function EmailForm({
             )}
 
             <div className={styles.formGroup}>
-                <label htmlFor="email">{t('settings.security', 'emailTitle')}</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <label htmlFor="email" style={{ position: 'static' }}>{t('settings.security', 'emailTitle')}</label>
+                </div>
                 <input type="email" id="email" name="email" className="form-input" defaultValue={initialEmail} required />
             </div>
 
             <div className={styles.formGroup}>
-                <label htmlFor="secondaryEmail">{t('settings.security', 'secondaryEmailTitle')}</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <label htmlFor="secondaryEmail" style={{ position: 'static' }}>{t('settings.security', 'secondaryEmailTitle')}</label>
+                    {initialSecondaryEmail && (
+                        <span style={{ fontSize: '0.8rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: initialSecondaryEmailVerified ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', color: initialSecondaryEmailVerified ? '#10b981' : '#ef4444' }}>
+                            {initialSecondaryEmailVerified ? 'Verified' : 'Not verified'}
+                        </span>
+                    )}
+                </div>
                 <input type="email" id="secondaryEmail" name="secondaryEmail" className="form-input" defaultValue={initialSecondaryEmail} placeholder="backup@example.com" />
             </div>
 

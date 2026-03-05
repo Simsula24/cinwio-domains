@@ -95,17 +95,79 @@ export async function updateEmails(prevState: any, formData: FormData) {
 
         // 1. Save secondary email straight to the user
         // We will "pretend" to trigger verification for it as requested by returning a message
-        if (user.secondaryEmail !== secondaryEmail) {
-            await pb.collection('users').update(user.id, { secondaryEmail });
+        let mockVerifyLink = '';
+        if (user.secondaryEmail !== secondaryEmail && secondaryEmail) {
+            await pb.collection('users').update(user.id, {
+                secondaryEmail,
+                secondaryEmailVerified: false
+            });
+            // Generate a secure verification token mapping to our verify-secondary page
+            const fakeToken = btoa(JSON.stringify({ id: user.id, email: secondaryEmail, timestamp: Date.now() }));
+            mockVerifyLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://domains.cinwio.com'}/verify-secondary?token=${fakeToken}`;
+
+            // Send the verification email using Resend API
+            try {
+                const resendToken = process.env.RESEND_API_TOKEN;
+                if (resendToken) {
+                    const prettyHtml = `
+                    <div style="font-family: Arial, sans-serif; padding: 40px 20px; background-color: #f8fafc; color: #0f172a;">
+                        <div style="max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); text-align: center;">
+                            <h2 style="color: #4f46e5; margin-bottom: 20px;">Verify Your Secondary Email</h2>
+                            <p style="font-size: 16px; line-height: 1.6; color: #475569; margin-bottom: 30px;">
+                                You recently added or changed the secondary email address for your CINWIO Domains account. Please click the button below to verify it.
+                            </p>
+                            <a href="${mockVerifyLink}" style="background-color: #4f46e5; color: white; padding: 12px 28px; text-decoration: none; font-size: 16px; border-radius: 6px; display: inline-block; font-weight: bold;">
+                                Verify Email Address
+                            </a>
+                            <p style="font-size: 14px; color: #94a3b8; margin-top: 30px; line-height: 1.5;">
+                                If you did not request this, you can safely ignore this email.
+                            </p>
+                            <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 30px 0;"/>
+                            <p style="font-size: 12px; color: #94a3b8;">
+                                If the button does not work, copy and paste this link into your browser:<br><br>
+                                <a href="${mockVerifyLink}" style="color: #4f46e5; word-break: break-all;">${mockVerifyLink}</a>
+                            </p>
+                        </div>
+                    </div>
+                    `;
+
+                    await fetch('https://api.resend.com/emails', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${resendToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            from: 'CINWIO Domains <noreply@cinwio.com>',
+                            to: secondaryEmail,
+                            subject: 'Verify your secondary email',
+                            html: prettyHtml
+                        })
+                    });
+                    console.log("Verification email sent via Resend API.");
+                } else {
+                    console.log("⚠️ No RESEND_API_TOKEN found. Cannot send email.");
+                }
+            } catch (err) {
+                console.error("Failed to call Resend API:", err);
+            }
+
+            console.log("VERIFICATION EMAIL LINK:", mockVerifyLink);
+        } else if (user.secondaryEmail !== secondaryEmail && !secondaryEmail) {
+            // Clearing it
+            await pb.collection('users').update(user.id, {
+                secondaryEmail: '',
+                secondaryEmailVerified: false
+            });
         }
 
         // 2. Changing the primary email in PocketBase requires a special endpoint
         let message = 'Emails updated successfully.';
         if (user.email !== email && email) {
             await pb.collection('users').requestEmailChange(email);
-            message = 'A verification link has been sent to your new primary email. Secondary email updated if changed.';
-        } else if (user.secondaryEmail !== secondaryEmail && secondaryEmail) {
-            message = 'Secondary email updated and verification triggered (mocked).';
+            message = 'A verification link has been sent to your new primary email. Check your inbox.';
+        } else if (mockVerifyLink) {
+            message = `Secondary email changed! A verification email should be sent. (Dev mode: Check server console for the mock link)`;
         }
 
         return { success: true, message };

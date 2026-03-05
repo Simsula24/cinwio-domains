@@ -13,7 +13,7 @@ export default function DomainTransfer() {
     const [isTransferring, setIsTransferring] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<boolean>(false);
-    const { t } = useI18n();
+    const { t, formatCurrency } = useI18n();
 
     const [transferPrice, setTransferPrice] = useState<number | null>(null);
     const [renewalPrice, setRenewalPrice] = useState<number | null>(null);
@@ -151,7 +151,7 @@ export default function DomainTransfer() {
                                 <div className={styles.timelineHeader}>
                                     <span className={styles.timelineTitle}>{t('transfer', 'dueNow')}</span>
                                     <span className={styles.timelinePrice}>
-                                        {transferPrice !== null ? `$${transferPrice.toFixed(2)}` : 'N/A'}
+                                        {transferPrice !== null ? formatCurrency(transferPrice) : 'N/A'}
                                     </span>
                                 </div>
                                 <div className={styles.timelineDesc}>
@@ -166,7 +166,7 @@ export default function DomainTransfer() {
                             <div className={styles.timelineContent}>
                                 <div className={styles.timelineHeader}>
                                     <span className={styles.timelineTitle}>{t('transfer', 'extendedBy1Year')}</span>
-                                    <span className={styles.timelinePrice}>+$0.00</span>
+                                    <span className={styles.timelinePrice}>+{formatCurrency(0)}</span>
                                 </div>
                                 <div className={styles.timelineDesc}>
                                     <small>{t('transfer', 'extendedBy1YearDesc')}</small>
@@ -180,7 +180,7 @@ export default function DomainTransfer() {
                                 <div className={styles.timelineHeader}>
                                     <span className={`${styles.timelineTitle} ${styles.futureText}`}>{t('transfer', 'nextPaymentDue')}</span>
                                     <span className={`${styles.timelinePrice} ${styles.futureText}`}>
-                                        {renewalPrice !== null ? `$${renewalPrice.toFixed(2)}` : 'N/A'}
+                                        {renewalPrice !== null ? formatCurrency(renewalPrice) : 'N/A'}
                                     </span>
                                 </div>
                                 <div className={styles.timelineDesc}>

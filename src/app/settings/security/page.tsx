@@ -30,6 +30,7 @@ export default async function SecurityPage() {
             <EmailForm
                 initialEmail={user?.email || ''}
                 initialSecondaryEmail={user?.secondaryEmail || ''}
+                initialSecondaryEmailVerified={user?.secondaryEmailVerified || false}
             />
 
             <PasswordForm />

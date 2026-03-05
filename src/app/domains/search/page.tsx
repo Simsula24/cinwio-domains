@@ -11,7 +11,7 @@ export default function DomainSearch() {
     const [isSearching, setIsSearching] = useState(false);
     const [results, setResults] = useState<DomainSearchResult[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const { t } = useI18n();
+    const { t, formatCurrency } = useI18n();
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -84,7 +84,7 @@ export default function DomainSearch() {
                         <div className={styles.priceActions}>
                             {result.purchasable ? (
                                 <>
-                                    <span className={styles.price}>${result.purchasePrice?.toFixed(2)}/yr</span>
+                                    <span className={styles.price}>{formatCurrency(result.purchasePrice || 0)}/yr</span>
                                     <button className="btn btn-primary" style={{ padding: '0.6rem 1.5rem', fontSize: '0.8rem' }}>{t('search', 'add')}</button>
                                 </>
                             ) : (

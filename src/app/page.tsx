@@ -17,18 +17,18 @@ export default function Home() {
           </p>
           <div className={styles.heroCta}>
             <Link href="/domains/search" className="btn btn-primary">Search Domains</Link>
-            <Link href="/domains" className="btn btn-outline">My Portfolio</Link>
+            <Link href="/domains" className="btn btn-outline">My Domains</Link>
           </div>
         </section>
 
         <section className={styles.featuresSection}>
           <div className="glass-panel">
-            <h3>Name.com Integration</h3>
-            <p>Purchase and register domains instantly at the best prices.</p>
+            <h3>Easy to use</h3>
+            <p>Purchase and register domains instantly and easily.</p>
           </div>
           <div className="glass-panel">
-            <h3>Cloudflare DNS</h3>
-            <p>Automated zone creation and advanced DNS record management.</p>
+            <h3>Speed and stability</h3>
+            <p>Advanced DNS management and security with Cloudflare.</p>
           </div>
           <div className="glass-panel">
             <h3>Secure Dashboard</h3>
