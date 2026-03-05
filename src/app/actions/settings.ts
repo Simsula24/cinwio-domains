@@ -2,8 +2,16 @@
 
 import PocketBase from 'pocketbase';
 import { cookies } from 'next/headers';
+import crypto from 'crypto';
 
 const pbUrl = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'https://domaindb.cinwio.com/';
+const HMAC_SECRET = process.env.RESEND_API_TOKEN || 'fallback-secret-for-dev-only';
+
+function createSecureToken(payload: object): string {
+    const data = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    const signature = crypto.createHmac('sha256', HMAC_SECRET).update(data).digest('base64url');
+    return `${data}.${signature}`;
+}
 
 async function getPb() {
     const cookieStore = await cookies();
@@ -94,16 +102,17 @@ export async function updateEmails(prevState: any, formData: FormData) {
         if (!user || !user.id) return { error: 'Invalid user session.' };
 
         // 1. Save secondary email straight to the user
-        // We will "pretend" to trigger verification for it as requested by returning a message
-        let mockVerifyLink = '';
+        // We trigger verification by saving a securely signed token link
+        let verifyLink = '';
         if (user.secondaryEmail !== secondaryEmail && secondaryEmail) {
             await pb.collection('users').update(user.id, {
                 secondaryEmail,
                 secondaryEmailVerified: false
             });
-            // Generate a secure verification token mapping to our verify-secondary page
-            const fakeToken = btoa(JSON.stringify({ id: user.id, email: secondaryEmail, timestamp: Date.now() }));
-            mockVerifyLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://domains.cinwio.com'}/verify-secondary?token=${fakeToken}`;
+
+            // Generate a server-signed secure token
+            const secureToken = createSecureToken({ id: user.id, email: secondaryEmail, timestamp: Date.now() });
+            verifyLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://domains.cinwio.com'}/verify-secondary?token=${secureToken}`;
 
             // Send the verification email using Resend API
             try {
@@ -116,7 +125,7 @@ export async function updateEmails(prevState: any, formData: FormData) {
                             <p style="font-size: 16px; line-height: 1.6; color: #475569; margin-bottom: 30px;">
                                 You recently added or changed the secondary email address for your CINWIO Domains account. Please click the button below to verify it.
                             </p>
-                            <a href="${mockVerifyLink}" style="background-color: #4f46e5; color: white; padding: 12px 28px; text-decoration: none; font-size: 16px; border-radius: 6px; display: inline-block; font-weight: bold;">
+                            <a href="${verifyLink}" style="background-color: #4f46e5; color: white; padding: 12px 28px; text-decoration: none; font-size: 16px; border-radius: 6px; display: inline-block; font-weight: bold;">
                                 Verify Email Address
                             </a>
                             <p style="font-size: 14px; color: #94a3b8; margin-top: 30px; line-height: 1.5;">
@@ -125,7 +134,7 @@ export async function updateEmails(prevState: any, formData: FormData) {
                             <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 30px 0;"/>
                             <p style="font-size: 12px; color: #94a3b8;">
                                 If the button does not work, copy and paste this link into your browser:<br><br>
-                                <a href="${mockVerifyLink}" style="color: #4f46e5; word-break: break-all;">${mockVerifyLink}</a>
+                                <a href="${verifyLink}" style="color: #4f46e5; word-break: break-all;">${verifyLink}</a>
                             </p>
                         </div>
                     </div>
@@ -151,8 +160,6 @@ export async function updateEmails(prevState: any, formData: FormData) {
             } catch (err) {
                 console.error("Failed to call Resend API:", err);
             }
-
-            console.log("VERIFICATION EMAIL LINK:", mockVerifyLink);
         } else if (user.secondaryEmail !== secondaryEmail && !secondaryEmail) {
             // Clearing it
             await pb.collection('users').update(user.id, {
@@ -166,8 +173,8 @@ export async function updateEmails(prevState: any, formData: FormData) {
         if (user.email !== email && email) {
             await pb.collection('users').requestEmailChange(email);
             message = 'A verification link has been sent to your new primary email. Check your inbox.';
-        } else if (mockVerifyLink) {
-            message = `Secondary email changed! A verification email should be sent. (Dev mode: Check server console for the mock link)`;
+        } else if (verifyLink) {
+            message = `Secondary email updated! A secure verification email has been sent.`;
         }
 
         return { success: true, message };

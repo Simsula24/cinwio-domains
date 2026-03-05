@@ -9,6 +9,7 @@ const pbUrl = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'https://domaindb.cinwio
 export async function login(prevState: any, formData: FormData) {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
+    const redirectTo = formData.get('redirectTo') as string;
 
     if (!email || !password) {
         return { error: 'Email and password are required' };
@@ -36,7 +37,11 @@ export async function login(prevState: any, formData: FormData) {
         return { error: 'Invalid email or password.' };
     }
 
-    redirect('/domains');
+    if (redirectTo && redirectTo.startsWith('/')) {
+        redirect(redirectTo);
+    } else {
+        redirect('/domains');
+    }
 }
 
 export async function register(prevState: any, formData: FormData) {

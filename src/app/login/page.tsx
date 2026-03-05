@@ -4,9 +4,12 @@ import Link from "next/link";
 import styles from "./page.module.css";
 import { useActionState } from "react";
 import { login } from "../actions/auth";
+import { useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
     const [state, formAction, isPending] = useActionState(login, null);
+    const searchParams = useSearchParams();
+    const redirectTo = searchParams.get('redirectTo') || '';
 
     return (
         <div className={styles.authContainer}>
@@ -16,6 +19,7 @@ export default function LoginPage() {
                 <p className={styles.authSubtitle}>Log in to manage your domains</p>
 
                 <form className={styles.authForm} action={formAction}>
+                    <input type="hidden" name="redirectTo" value={redirectTo} />
                     {state?.error && <div className={styles.errorMessage}>{state.error}</div>}
 
                     <div className="form-group">

@@ -2,8 +2,32 @@ import Link from "next/link";
 import PocketBase from 'pocketbase';
 import styles from "../login/page.module.css";
 import { cookies } from "next/headers";
+import crypto from "crypto";
+import { redirect } from "next/navigation";
 
 export const dynamic = 'force-dynamic';
+
+const HMAC_SECRET = process.env.RESEND_API_TOKEN || 'fallback-secret-for-dev-only';
+
+function decodeSecureToken(token: string): any {
+    try {
+        const parts = token.split('.');
+        if (parts.length !== 2) return null;
+        const [data, signature] = parts;
+        const expectedSignature = crypto.createHmac('sha256', HMAC_SECRET).update(data).digest('base64url');
+
+        const sigBuf = Buffer.from(signature, 'base64url');
+        const expSigBuf = Buffer.from(expectedSignature, 'base64url');
+
+        if (sigBuf.length !== expSigBuf.length) return null;
+        if (crypto.timingSafeEqual(sigBuf, expSigBuf)) {
+            return JSON.parse(Buffer.from(data, 'base64url').toString('utf-8'));
+        }
+    } catch (e) {
+        return null;
+    }
+    return null;
+}
 
 export default async function VerifySecondaryPage({
     searchParams,
@@ -23,7 +47,8 @@ export default async function VerifySecondaryPage({
         const pbAuth = cookieStore.get('pb_auth')?.value;
 
         if (!pbAuth) {
-            message = "You must be logged in to verify this email.";
+            const redirectParams = encodeURIComponent(`/verify-secondary?token=${token}`);
+            redirect(`/login?redirectTo=${redirectParams}`);
         } else {
             const pbUrl = process.env.NEXT_PUBLIC_POCKETBASE_URL || 'https://domaindb.cinwio.com/';
             const pb = new PocketBase(pbUrl);
@@ -35,7 +60,11 @@ export default async function VerifySecondaryPage({
 
                 if (!user) throw new Error("Invalid user");
 
-                const payload = JSON.parse(atob(token));
+                const payload = decodeSecureToken(token);
+
+                if (!payload) {
+                    throw new Error("Invalid or tampered token signature.");
+                }
 
                 if (payload.id === user.id && payload.email === user.secondaryEmail) {
                     await pb.collection('users').update(user.id, {
