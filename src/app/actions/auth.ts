@@ -28,7 +28,7 @@ export async function login(prevState: any, formData: FormData) {
         const cookieStore = await cookies();
         cookieStore.set('pb_auth', pb.authStore.token, {
             path: '/',
-            secure: process.env.NODE_ENV === 'production',
+            secure: process.env.NODE_ENV === 'production' && process.env.SECURE_COOKIES !== 'false',
             httpOnly: true,
             sameSite: 'lax',
             maxAge: 60 * 60 * 24 * 7 // 1 week
